@@ -50,12 +50,12 @@ if __name__ == '__main__':
     parser.add_argument('--params', dest='params')
     args = parser.parse_args()
 
-    # 加载参数
+ 
     with open(f'./{args.params}', 'r') as f:
         params_loaded = yaml.load(f, Loader=yaml.FullLoader)
 
     current_time = datetime.datetime.now().strftime('%b.%d_%H.%M.%S')
-    # 创建不同任务的模型
+   
     if params_loaded['type'] == config.TYPE_CIFAR:
         helper = ImageHelper(current_time=current_time, params=params_loaded,
                              name=params_loaded.get('name', 'cifar'))
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     best_loss = float('inf')
     logger.info(f"We use following environment for graphs:  {helper.params['environment_name']}")
 
-    # 初始化权重累积列表
+   
     weight_accumulator = helper.init_weight_accumulator(helper.target_model)
 
     # save parameters:
@@ -107,10 +107,10 @@ if __name__ == '__main__':
 
     # load trigger
     if params_loaded['type'] == config.TYPE_FMNIST or params_loaded['type'] == config.TYPE_MNIST:
-        intinal_trigger = helper.params['trigger_value']  # 原始trigger
+        intinal_trigger = helper.params['trigger_value']  
         noise_trigger = copy.deepcopy(intinal_trigger)
     elif params_loaded['type'] == config.TYPE_LOAN or params_loaded['type'] == config.TYPE_DDOS:
-        intinal_trigger = helper.params['trigger_value']  # 原始trigger
+        intinal_trigger = helper.params['trigger_value']  
         noise_trigger = copy.deepcopy(intinal_trigger)
     elif params_loaded['type'] == config.TYPE_CIFAR or params_loaded['type'] == config.TYPE_CIFAR100:
         data_iterator = helper.test_data
@@ -129,11 +129,11 @@ if __name__ == '__main__':
 
         noise_trigger = copy.deepcopy(intinal_trigger)
 
-    # 正式开始训练
+   
     for epoch in range(helper.start_epoch, helper.params['epochs'] + 1, helper.params['aggr_epoch_interval']):
         start_time = time.time()
         t = time.time()
-        # 创建正常用户列表、攻击者列表
+        
         agent_name_keys = helper.participants_list
         adversarial_name_keys = []
         if helper.params['is_random_namelist']:
@@ -163,12 +163,12 @@ if __name__ == '__main__':
         logger.info(f'Server Epoch:{epoch} choose agents : {agent_name_keys}.')
 
         current_number_of_adversaries = 0
-        for temp_name in agent_name_keys:  # agent是包含正常用户、攻击者的列表
+        for temp_name in agent_name_keys: 
             if temp_name in helper.params['adversary_list']:
                 current_number_of_adversaries += 1
         logger.info(f'current malicious clients={current_number_of_adversaries}')
 
-        # 微调trigger，并训练模型
+      
         epochs_submit_update_dict, num_samples_dict, user_grad, server_update, tuned_trigger = train.train(
             helper=helper,
             start_epoch=epoch,
@@ -179,7 +179,7 @@ if __name__ == '__main__':
             noise_trigger=noise_trigger,
             intinal_trigger=intinal_trigger)
 
-        # 做为下一轮的初始trigger
+      
         noise_trigger = tuned_trigger
 
         logger.info(f'time spent on training: {time.time() - t}')
@@ -187,7 +187,7 @@ if __name__ == '__main__':
                                                                agent_name_keys, num_samples_dict)
         is_updated = True
 
-        # 聚合，helper.target_model更新
+      
         print(helper.params['aggregation_methods'])
         if helper.params['aggregation_methods'] == config.AGGR_MEAN:
             # Average the models
@@ -273,7 +273,7 @@ if __name__ == '__main__':
 
         # clear the weight_accumulator
         weight_accumulator = helper.init_weight_accumulator(helper.target_model)
-        print('聚合完毕')
+       
         temp_global_epoch = epoch + helper.params['aggr_epoch_interval'] - 1
 
         epoch_loss, epoch_acc, epoch_corret, epoch_total = test.Mytest(helper=helper, epoch=temp_global_epoch,
@@ -295,8 +295,7 @@ if __name__ == '__main__':
         csv_record.posiontest_result.append(
                 ["global", temp_global_epoch, epoch_loss, epoch_acc_p, epoch_corret, epoch_total])
 
-        # main.logger.info("该轮微调后的trigger：{}".format(tuned_trigger))
-        # print("trigger norm：{}".format(torch.norm(noise_trigger - torch.tensor(intinal_trigger).cuda())))
+      
         helper.save_model(epoch=epoch, val_loss=epoch_loss)
         logger.info(f'Done in {time.time() - start_time} sec.')
         csv_record.save_result_csv(epoch, helper.params['is_poison'], helper.folder_path)
