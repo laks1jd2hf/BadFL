@@ -263,7 +263,7 @@ if __name__ == '__main__':
                                        agent_name_keys=agent_name_keys, epoch=epoch)
 
         elif helper.params['aggregation_methods'] == config.AGGR_DNC:
-            # 是一个 boolean
+           
             is_updated = helper.DnC(target_model=helper.target_model, updates=updates,
                                     users_count=int(helper.params["no_models"]), m=current_number_of_adversaries)
 
