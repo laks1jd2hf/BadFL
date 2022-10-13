@@ -35,7 +35,7 @@ def proj_lp(v, xi, p):
 
 
 def loan_trigger(helper, local_model, target_model, noise_trigger, intinal_trigger):
-    # 加载参数
+   
     logger.info("start trigger fine-tuning")
     init = False
     # load model
@@ -78,10 +78,7 @@ def loan_trigger(helper, local_model, target_model, noise_trigger, intinal_trigg
 
                 output = model((x + noise).float())
                 classloss = nn.functional.cross_entropy(output, y_target)
-                # print(classloss)
-                # perceptualloss = F.mse_loss(x + noise, x) + F.relu(noise.norm()-5)
-                # loss = classloss + 10*perceptualloss
-                # loss = classloss+ helper.params['lamda'] * torch.norm(noise-pre_trigger)
+               
                 loss = classloss
                 model.zero_grad()
                 if noise.grad:
@@ -95,11 +92,10 @@ def loan_trigger(helper, local_model, target_model, noise_trigger, intinal_trigg
                     else:
                         continue
 
-                # print(f'pgd前噪声：{torch.norm(noise - aa)}')
+                
                 delta_noise = noise - aa
                 noise = aa + proj_lp(delta_noise, 10, 2)
-                # noise = pre_trigger + proj_lp(delta_noise, 1, 2)  #其余
-                # print(f'pgd后噪声：{torch.norm(noise - aa)}')
+             
 
                 noise = Variable(cuda(noise.data, True), requires_grad=True)
                 pred = output.data.max(1)[1]
