@@ -54,7 +54,7 @@ class Cifar100Helper(Helper):
             target_model = resnet18(name='Target',
                                     created_time=self.params['current_time'])
 
-        local_model = local_model.to(device)  # 将模型加载到指定设备上。
+        local_model = local_model.to(device)  
         target_model = target_model.to(device)
         if self.params['resumed_model']:
             if torch.cuda.is_available():
@@ -72,7 +72,7 @@ class Cifar100Helper(Helper):
         self.local_model = local_model
         self.target_model = target_model
 
-    def build_classes_dict(self):  # 创建类别列表
+    def build_classes_dict(self): 
         cifar_classes = {}
         for ind, x in enumerate(self.train_dataset):  # for cifar: 50000; for tinyimagenet: 100000
             _, label = x
@@ -85,13 +85,13 @@ class Cifar100Helper(Helper):
     def sample_dirichlet_train_data(self, no_participants, alpha=0.9):
         """
             Input: Number of participants and alpha (param for distribution)
-            Output: A list of indices denoting data in CIFAR training set.数据索引列表
+            Output: A list of indices denoting data in CIFAR training set.
             Requires: cifar_classes, a preprocessed class-indice dictionary.
             Sample Method: take a uniformly sampled 10-dimension vector as parameters for
-            dirichlet distribution to sample number of images in each class.#每一维代表着每一个类别里抽取多少数据
+            dirichlet distribution to sample number of images in each class
         """
 
-        cifar_classes = self.classes_dict  # 类别
+        cifar_classes = self.classes_dict 
         class_size = len(cifar_classes[0])  # for cifar: 5000
         per_participant_list = defaultdict(list)
         no_classes = len(cifar_classes.keys())  # for cifar: 10
@@ -109,7 +109,7 @@ class Cifar100Helper(Helper):
             scalenum = 3
         for n in range(no_classes):
             image_num = []
-            random.shuffle(cifar_classes[n])  # 将列表随机排序
+            random.shuffle(cifar_classes[n])
             sampled_probabilities = int(scalenum) * class_size * np.random.dirichlet(
                 np.array(no_participants * [alpha]))
             for user in range(no_participants):
@@ -117,7 +117,7 @@ class Cifar100Helper(Helper):
                 sampled_list = cifar_classes[n][:min(len(cifar_classes[n]), no_imgs)]
                 image_num.append(len(sampled_list))
                 per_participant_list[user].extend(sampled_list)
-                random.shuffle(cifar_classes[n])  # 将列表随机排序
+                random.shuffle(cifar_classes[n]) 
                 # cifar_classes[n] = cifar_classes[n][min(len(cifar_classes[n]), no_imgs):]
             image_nums.append(image_num)
 
@@ -189,7 +189,6 @@ class Cifar100Helper(Helper):
     def load_data(self):
         logger.info('Loading data')
         dataPath = './data'
-        # 加载数据
         if self.params['type'] == config.TYPE_CIFAR:
             ### data load
             transform_train = transforms.Compose([
@@ -208,8 +207,8 @@ class Cifar100Helper(Helper):
         if self.params['type'] == config.TYPE_CIFAR100:
             ### data load
             transform_train = transforms.Compose([
-                transforms.RandomCrop(32, padding=4),  # 先四周填充0，在吧图像随机裁剪成32*32
-                transforms.RandomHorizontalFlip(),  # 图像一半的概率翻转，一半的概率不翻转
+                transforms.RandomCrop(32, padding=4), 
+                transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
             ])
@@ -255,9 +254,8 @@ class Cifar100Helper(Helper):
                                                      _data_transforms['val'])
             logger.info('reading data done')
 
-        self.classes_dict = self.build_classes_dict()  # 创建类别列表
+        self.classes_dict = self.build_classes_dict() 
         logger.info('build_classes_dict done')
-        # 根据用户划分数据，数据分布
         if self.params['sampling_dirichlet']:
             ## sample indices for participants using Dirichlet distribution
             indices_per_participant = self.sample_dirichlet_train_data(
@@ -275,11 +273,11 @@ class Cifar100Helper(Helper):
         logger.info('train loaders done')
         self.train_data = train_loaders
         self.test_data = self.get_test()
-        self.test_data_poison, self.test_targetlabel_data = self.poison_test_dataset()  # 加载投毒后的测试集，去掉目标样本
+        self.test_data_poison, self.test_targetlabel_data = self.poison_test_dataset()  
 
-        self.advasarial_namelist = self.params['adversary_list']  # 加载攻击用户列表
+        self.advasarial_namelist = self.params['adversary_list'] 
 
-        if self.params['is_random_namelist'] == False:  # 加载参与方用户列表
+        if self.params['is_random_namelist'] == False: 
             self.participants_list = self.params['participants_namelist']
         else:
             self.participants_list = list(range(self.params['number_of_total_participants']))
@@ -339,7 +337,7 @@ class Cifar100Helper(Helper):
         new_images = images
         new_targets = targets
 
-        # 得到训练样本：每一个local worker对图像加global trigger
+        
         for index in range(0, len(images)):
             if evaluation:  # poison all data when testing
                 new_targets[index] = self.params['poison_label_swap']
@@ -349,7 +347,7 @@ class Cifar100Helper(Helper):
             else:  # poison part of data when training
                 if index < self.params['poisoning_per_batch']:
                     new_targets[index] = self.params['poison_label_swap']
-                    new_images[index] = self.add_pixel_pattern(images[index], noise_trigger)  # 对图片加噪声
+                    new_images[index] = self.add_pixel_pattern(images[index], noise_trigger)  
                     poison_count += 1
                 else:
                     new_images[index] = images[index]
@@ -362,7 +360,7 @@ class Cifar100Helper(Helper):
             new_targets.requires_grad_(False)
         return new_images, new_targets, poison_count
 
-    # 对图片进行投毒操作，加噪声
+  
     def add_pixel_pattern(self, ori_image, noise_trigger):
         image = copy.deepcopy(ori_image)
         noise = torch.tensor(noise_trigger).cpu()
@@ -370,7 +368,7 @@ class Cifar100Helper(Helper):
         poison_patterns = poison_patterns + self.params['sum_poison_pattern']
         for i in range(0, len(poison_patterns)):
             pos = poison_patterns[i]
-            image[0][pos[0]][pos[1]] = noise[0][pos[0]][pos[1]]  # +delta i  #？
+            image[0][pos[0]][pos[1]] = noise[0][pos[0]][pos[1]]  # +delta i  
             image[1][pos[0]][pos[1]] = noise[1][pos[0]][pos[1]]  # +delta i
             image[2][pos[0]][pos[1]] = noise[2][pos[0]][pos[1]]  # +delta i
 
