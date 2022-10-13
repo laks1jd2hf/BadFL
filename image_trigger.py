@@ -51,9 +51,9 @@ def cifar_trigger(helper, local_model, target_model, noise_trigger,intinal_trigg
         datasize = 0
         count=0
         for poison_id in helper.params['adversary_list']:
-            #qiyu 5个用户；bulyan 所有用户
+          
             count += 1
-            if count > 6:   #只用5个用户的数据微调
+            if count > 6:  
                 break
 
             _, data_iterator = helper.train_data[poison_id]
