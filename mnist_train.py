@@ -12,35 +12,35 @@ from mnist_trigger import mnist_trigger
 
 def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_name_keys, noise_trigger,
                intinal_trigger):
-    epochs_submit_update_dict = dict()  # 字典
+    epochs_submit_update_dict = dict() 
     epochs_change_update_dict = dict()
     num_samples_dict = dict()
-    current_number_of_adversaries = 0  # 攻击者数量
-    for temp_name in agent_name_keys:  # agent是包含正常用户、攻击者的列表
+    current_number_of_adversaries = 0  
+    for temp_name in agent_name_keys: 
         if temp_name in helper.params['adversary_list']:
             current_number_of_adversaries += 1
-    poisonupdate_dict = dict()  # 被控制用户的模型
+    poisonupdate_dict = dict()  
     user_grads = []
     server_update = dict()
     models = copy.deepcopy(local_model)
     models.copy_params(target_model.state_dict())
-    IsTrigger = False  # 是否进行过trigger调整
+    IsTrigger = False 
     tuned_trigger = noise_trigger
 
-    ###每个用户（包括正常、攻击）
+  
     for model_id in range(helper.params['no_models']):
         epochs_local_update_list = []
         last_local_model = dict()
         client_grad = []  # only works for aggr_epoch_interval=1
         for name, data in target_model.state_dict().items():
-            last_local_model[name] = target_model.state_dict()[name].clone()  # 获取上一轮模型参数
+            last_local_model[name] = target_model.state_dict()[name].clone() 
 
         agent_name_key = agent_name_keys[model_id]
         model = local_model
         normalmodel = copy.deepcopy(local_model)
-        # 获取上一轮全局模型
+       
         model.copy_params(target_model.state_dict())
-        normalmodel.copy_params(target_model.state_dict())  # 未受到攻击时的模型
+        normalmodel.copy_params(target_model.state_dict()) 
         optimizer = torch.optim.SGD(model.parameters(), lr=helper.params['lr'],
                                     momentum=helper.params['momentum'],
                                     weight_decay=helper.params['decay'])
@@ -55,14 +55,14 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
             localmodel_poison_epochs = helper.params['sum_poison_epochs']
 
 
-        # 每轮训练
+       
         for epoch in range(start_epoch, start_epoch + helper.params['aggr_epoch_interval']):
 
             target_params_variables = dict()
             for name, param in target_model.named_parameters():
                 target_params_variables[name] = last_local_model[name].clone().detach().requires_grad_(False)
 
-            # 如果本轮进行投毒，并且用户在攻击者列表种
+          
             if is_poison and agent_name_key in helper.params['adversary_list'] and (epoch in localmodel_poison_epochs):
                 main.logger.info('poison_now')
 
@@ -70,12 +70,12 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
                     tuned_trigger = mnist_trigger(helper, local_model, target_model, noise_trigger, intinal_trigger)
                     IsTrigger = True
 
-                # main.logger.info("进行投毒的trigger：{}".format(tuned_trigger))
+               
                 poison_lr = helper.params['poison_lr']
                 internal_epoch_num = helper.params['internal_poison_epochs']
                 step_lr = helper.params['poison_step_lr']
 
-                # 正常训练时优化器：noramlOptimizer
+             
                 main.logger.info('normally training')
                 _, data_iterator = helper.train_data[agent_name_key]
                 normalData_size = 0
@@ -91,7 +91,7 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
                 for name, param in normalmodel.named_parameters():
                     normal_params_variables[name] = normalmodel.state_dict()[name].clone().detach().requires_grad_(
                         False)
-                # 如果投毒保存正常模型更新，以防止不发起攻击
+               
                 normalmodel_updates_dict = dict()
 
                 for name, data in normalmodel.state_dict().items():
@@ -100,12 +100,12 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
 
                 main.logger.info('save normal model, normally training ending')
 
-                # 进行攻击时的优化器
+               
                 poison_optimizer = torch.optim.SGD(model.parameters(), lr=poison_lr,
                                                    momentum=helper.params['momentum'],
                                                    weight_decay=helper.params['decay'])
 
-                # 动态调整学习率
+               
                 scheduler = torch.optim.lr_scheduler.MultiStepLR(poison_optimizer,
                                                                  milestones=[0.2 * internal_epoch_num,
                                                                              0.8 * internal_epoch_num], gamma=0.1)
@@ -121,7 +121,7 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
                     dis2global_list = []
 
                     for batch_id, batch in enumerate(data_iterator):
-                        # 生成后门样本训练
+                      
                         data, targets, poison_num = helper.get_poison_batch(batch, noise_trigger=tuned_trigger,evaluation=False)
                         poison_optimizer.zero_grad()
                         dataset_size += len(data)
@@ -132,7 +132,7 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
                         if helper.params['attack_methods'] == 'SCBA':
                             malDistance_Loss = helper.model_dist_norm_var(model, normal_params_variables)
                             distance_loss = helper.model_dist_norm_var(model, target_params_variables)
-                            ###与其他被控制用户模型更新的相似度
+                         
                             sum_cs = 0
                             otheradnum = 0
                             if poisonupdate_dict:
@@ -258,7 +258,7 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
                 main.logger.info(f"Total norm for {current_number_of_adversaries} "
                                  f"adversaries is: {helper.model_global_norm(model)}. distance: {distance}")
 
-            # 如果本轮不投毒
+          
             else:
                 temp_local_epoch = (epoch - 1) * helper.params['internal_epochs']
                 for internal_epoch in range(1, helper.params['internal_epochs'] + 1):
@@ -341,9 +341,9 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
                 csv_record.test_result.append([agent_name_key, epoch, epoch_loss, epoch_acc, epoch_corret, epoch_total,
                                                helper.model_dist_norm(model, target_params_variables)])
 
-            # 如果本次整个训练进行投毒
+          
             if is_poison:
-                # 如果用户是攻击者，并且在本轮进行投毒,输出投毒准确率
+              
                 if agent_name_key in helper.params['adversary_list'] and (epoch in localmodel_poison_epochs):
                     epoch_loss, epoch_acc, epoch_corret, epoch_total = test.Mytest_poison(helper=helper,
                                                                                           epoch=epoch,
@@ -361,8 +361,7 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
                         Ad_model_dict[name] = model.state_dict()[name].clone().detach().requires_grad_(False)
                     poisonupdate_dict[agent_name_key] = Ad_model_dict
 
-            # 本轮进行模型权重更新
-            # update the model weight
+         
             local_model_update_dict = dict()
 
             for name, data in model.state_dict().items():
@@ -381,7 +380,7 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
             else:
                 epochs_local_update_list.append(local_model_update_dict)
 
-        # 每个用户将自己的模型更新发送到
+    
         epochs_change_update_dict[agent_name_key] = epochs_local_update_list
 
     for name, params in epochs_change_update_dict.items():
@@ -398,7 +397,7 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
         temp_local_epoch = start_epoch - 1
         for internal_epoch in range(1, helper.params['internal_epochs'] + 1):
             temp_local_epoch += 1
-            data_iterator = helper.test_data  # 用测试集进行训练一个全局模型
+            data_iterator = helper.test_data
             total_loss = 0.
             correct = 0
             dataset_size = 0
@@ -430,4 +429,4 @@ def MnistTrain(helper, start_epoch, local_model, target_model, is_poison, agent_
             server_update[name] = (data - last_params_variabless[name])
             last_params_variabless[name] = copy.deepcopy(data)
 
-    return epochs_submit_update_dict, num_samples_dict, user_grads, server_update, tuned_trigger  # 返回本轮训练得到的用户模型以及各个用户的数据量
+    return epochs_submit_update_dict, num_samples_dict, user_grads, server_update, tuned_trigger 
