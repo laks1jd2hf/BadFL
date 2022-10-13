@@ -47,7 +47,7 @@ def mnist_trigger(helper, local_model, target_model, noise_trigger, intinal_trig
     aa = copy.deepcopy(intinal_trigger)
     aa = torch.tensor(aa).cuda()
 
-    for e in range(15):  # 真实是15
+    for e in range(15):  
         corrects = 0
         datasize = 0
         for poison_id in helper.params['adversary_list']:
@@ -68,8 +68,7 @@ def mnist_trigger(helper, local_model, target_model, noise_trigger, intinal_trig
                 classloss = nn.functional.cross_entropy(output, y_target)
                 # loss = classloss + helper.params['lamda'] * torch.norm(noise - pre_trigger)
                 loss = classloss
-                # print(classloss)
-                # print(torch.norm(noise - pre_trigger))
+               
                 model.zero_grad()
                 if noise.grad:
                     noise.grad.fill_(0)
@@ -84,13 +83,10 @@ def mnist_trigger(helper, local_model, target_model, noise_trigger, intinal_trig
                         else:
                             noise[0][i][j] = 0
 
-                #print(f'pgd前噪声：{torch.norm(noise - aa)}')
+              
                 delta_noise = noise - aa
                 noise = aa + proj_lp(delta_noise,10, 2)
 
-
-                # print(noise)
-                # logger.info('noise{}'.format(noise))
 
                 noise = Variable(cuda(noise.data, True), requires_grad=True)
                 pred = output.data.max(1)[1]
