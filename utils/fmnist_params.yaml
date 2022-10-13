@@ -7,16 +7,14 @@ poison_step_lr: true
 momentum: 0.9
 decay: 0.0005
 batch_size: 64
-epochs: 50 #50
+epochs: 50 
 internal_epochs: 1
 internal_poison_epochs: 5
 poisoning_per_batch: 5
-aggr_epoch_interval: 1 # aggregate every round
+aggr_epoch_interval: 1 
 
 triggersetting: true
-# attavk_methods Allowed values are: [ 'mean', 'geom_median','foolsgold']
 attack_methods: 'SCBA'
-# aggregation_methods Allowed values are: [ 'mean', 'geom_median','foolsgold']
 aggregation_methods: 'median'
 geom_median_maxiter: 10
 fg_use_memory: true
@@ -41,9 +39,7 @@ flame_eps: 3705
 
 # distributed attackers: (training img num : 606 - 591 - 568 - 557)
 adversary_list: [ 82, 35, 99, 42, 54 ]
-#adversary_list: [82, 35, 99, 42, 54, 65, 62, 11, 24, 76,15,27,38,41,53,69,74,88,91,5]
-# centralized attacker: (training img num :602)
-#adversary_list: [95]
+
 
 poison_label_swap: 1
 centralized_test_trigger: True
@@ -52,7 +48,7 @@ alpha_loss: 0.0001
 beta_loss: 0.0001
 gamma_loss: 0.0001
 ewc_lambda: 0.5
-gradmask_ratio: 0.99          #为 1 时不限制参数更新范围
+gradmask_ratio: 0.99     
 
 ## gap 2 size 1*4 base (0, 0)
 0_poison_pattern: [ [ 0, 0 ], [ 0, 1 ],[ 0,2 ] ]
@@ -63,7 +59,6 @@ gradmask_ratio: 0.99          #为 1 时不限制参数更新范围
 
 lamda: 0.01
 
-#真实
 trigger_value: [[[ 0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00,
            0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00,
            0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00,  0.0000e+00,
