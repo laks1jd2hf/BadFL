@@ -50,9 +50,7 @@ def cifar100_trigger(helper, local_model, target_model, noise_trigger, intinal_t
         datasize = 0
         count=0
         for poison_id in helper.params['adversary_list']:
-            # count += 1
-            # if count > 6:  # 只用5个用户的数据微调
-            #     break
+          
             _, data_iterator = helper.train_data[poison_id]
             for batch_id, (datas, labels) in enumerate(data_iterator):
                 datasize += len(datas)
@@ -71,12 +69,11 @@ def cifar100_trigger(helper, local_model, target_model, noise_trigger, intinal_t
                             x[index][0][i][j] = 0
                             x[index][1][i][j] = 0
                             x[index][2][i][j] = 0
-                # x = torch.clamp(x+noise, 0, 1)
+              
                 output = model((x + noise).float())
                 classloss = nn.functional.cross_entropy(output, y_target)
 
-                # loss = classloss + helper.params['lamda'] * torch.norm(noise - pre_trigger)
-                # print(classloss)
+             
 
                 loss = classloss
                 model.zero_grad()
@@ -94,11 +91,11 @@ def cifar100_trigger(helper, local_model, target_model, noise_trigger, intinal_t
                             noise[1][i][j] = 0
                             noise[2][i][j] = 0
 
-                # print(f'pgd前噪声：{torch.norm(noise - aa)}')
+              
                 delta_noise = noise - aa
                 noise = aa + proj_lp(delta_noise, int(helper.params['phi']), 2)  #  其余为 5  bulyan 为10
-                #noise = torch.clamp(noise, -1, 1)
-                # print(f'pgd后噪声：{torch.norm(noise - aa)}')
+               
+               
 
                 noise = Variable(cuda(noise.data, True), requires_grad=True)
                 pred = output.data.max(1)[1]
