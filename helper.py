@@ -215,7 +215,7 @@ class Helper:
              updates: dict of (num_samples, update), where num_samples is the
                  number of training samples corresponding to the update, and update
                  is a list of variable weights
-            state_key:用户数
+            state_key:
          """
         if self.params['aggregation_methods'] == config.AGGR_FOOLSGOLD or self.params[
             'aggregation_methods'] == config.AGGR_KRUM \
@@ -231,7 +231,7 @@ class Helper:
                 updates[state_keys[i]] = (num_samples, copy.deepcopy(local_model_gradients))
             return None, updates
 
-        else:  # for flame 存的是参数
+        else:  
             updates = dict()
             for i in range(0, len(state_keys)):
                 local_model_update_list = epochs_submit_update_dict[state_keys[i]]
@@ -320,11 +320,7 @@ class Helper:
             if self.params.get('tied', False) and name == 'decoder.weight':
                 continue
             update_per_layer = weight_accumulator[name] * (self.params["eta"] / self.params["no_models"])
-            # update_per_layer = weight_accumulator[name] * (self.params["eta"] / self.params["number_of_total_participants"])
-            # update_per_layer = update_per_layer * 1.0 / epoch_interval
-            # if self.params['diff_privacy']:
-            #     update_per_layer.add_(self.dp_noise(data, self.params['sigma']))
-
+           
             newvalue = data + update_per_layer
             target_model.state_dict()[name].copy_(newvalue)
 
@@ -378,11 +374,9 @@ class Helper:
         users_grads = Helper.collect_gradients(updates, users_grads)
         velocity = np.zeros(current_weights.shape, users_grads.dtype)
 
-        # if not return_index:
-        #     assert users_count >= 2 * corrupted_count + 1, (
-        #         'users_count>=2*corrupted_count + 3', users_count, corrupted_count)
+       
         if corrupted_count > 5:
-            corrupted_count = 5  # 保证只有5个用户
+            corrupted_count = 5 
         logger.info(corrupted_count)
         non_count = users_count - corrupted_count
         minimal_error = 1e20
@@ -399,8 +393,7 @@ class Helper:
         main.logger.info(minimal_error_index)
         current_grads = users_grads[minimal_error_index]
 
-        # velocity = self.params['momentum'] * velocity - self.params['lr'] * current_grads
-        # current_weights += velocity
+       
         current_weights = current_weights - self.params['lr'] * current_grads
         Helper.row_into_parameters(current_weights, target_model)
         return True
@@ -414,9 +407,7 @@ class Helper:
         if corrupted_count > 5:
             corrupted_count = 5
         logger.info(corrupted_count)
-        # if not return_index:
-        #     assert users_count >= 2 * corrupted_count + 1, (
-        #         'users_count>=2*corrupted_count + 3', users_count, corrupted_count)
+      
         non_malicious_count = users_count - corrupted_count
         minimal_error = 1e20
         minimal_error_index = -1
@@ -440,8 +431,7 @@ class Helper:
         for i, param_across_users in enumerate(users_gradsss.T):
             current_grads[i] = np.mean(param_across_users)
 
-        # velocity = self.params['momentum'] * velocity - self.params['lr'] * current_grads
-        # current_weights += velocity
+      
         current_weights = current_weights - self.params['lr'] * current_grads
         Helper.row_into_parameters(current_weights, target_model)
         return True
@@ -454,25 +444,21 @@ class Helper:
 
         number_to_consider = int(users_grads.shape[0] - 2) - 1
         current_grads = np.empty((users_grads.shape[1],), users_grads.dtype)
-        print("grad收集完毕")
+        
         for i, param_across_users in enumerate(users_grads.T):
             med = np.median(param_across_users)
             good_vals = sorted(param_across_users - med, key=lambda x: abs(x))[:number_to_consider]
             current_grads[i] = np.mean(good_vals) + med
 
-        print("current_grad计算完毕")
-        # velocity = self.params['momentum'] * velocity - self.params['lr'] * current_grads
-        # current_weights += velocity
+       
         current_weights = current_weights - self.params['lr'] * current_grads
-        print("current_weight计算完毕")
+      
         Helper.row_into_parameters(current_weights, target_model)
-        print("转化成model")
+       
         return True
 
     def computekrum(self, users_grads, users_count, corrupted_count, distances=None, return_index=False, debug=False):
-        # if not return_index:
-        #     assert users_count >= 2 * corrupted_count + 1, (
-        #         'users_count>=2*corrupted_count + 3', users_count, corrupted_count)
+      
         non_malicious_count = users_count - corrupted_count
         minimal_error = 1e20
         minimal_error_index = -1
@@ -506,9 +492,9 @@ class Helper:
         users_grads = np.empty((users_count, len(current_weights)), dtype=current_weights.dtype)
         users_grads = Helper.collect_gradients(updates, users_grads)
         velocity = np.zeros(current_weights.shape, users_grads.dtype)
-        print("grad收集完毕")
+       
 
-        if corrupted_count > 1:  # 保证每轮不超过一个恶意用户
+        if corrupted_count > 1: 
             corrupted_count = 1
         logger.info(corrupted_count)
         # assert users_count >= 4 * corrupted_count + 3
@@ -526,13 +512,12 @@ class Helper:
                 distances[remaining_user].pop(currently_selected)
 
         current_grads = self.computetrimmed(np.array(selection_set), len(selection_set), 2)
-        print("current_grad计算完毕")
-        # velocity = self.params['momentum'] * velocity - self.params['lr'] * current_grads
-        # current_weights += velocity
+      
+      
         current_weights = current_weights - self.params['lr'] * current_grads
-        print("current_weight计算完毕")
+     
         Helper.row_into_parameters(current_weights, target_model)
-        print("转化成model")
+      
         return True
 
     def median(self, target_model, users_count, updates):
@@ -544,18 +529,17 @@ class Helper:
 
         number_to_consider = int(users_grads.shape[0] - 2) - 1
         current_grads = np.empty((users_grads.shape[1],), users_grads.dtype)
-        print("grad收集完毕")
+      
         for i, param_across_users in enumerate(users_grads.T):
             med = np.median(param_across_users)
             current_grads[i] = med
 
-        print("current_grad计算完毕")
-        # velocity = self.params['momentum'] * velocity - self.params['lr'] * current_grads
-        # current_weights += velocity
+     
+        
         current_weights = current_weights - self.params['lr'] * current_grads
-        print("current_weight计算完毕")
+     
         Helper.row_into_parameters(current_weights, target_model)
-        print("转化成model")
+        
         return True
 
     def foolsgold_update(self, target_model, updates):
@@ -598,7 +582,7 @@ class Helper:
         user_cs = dict()
         user_nor = dict()
         update = dict()
-        # 加载用户模型参数
+      
         for idx, data in updates.items():
             update[idx] = data[1]
 
@@ -613,8 +597,8 @@ class Helper:
             m = nn.ReLU(inplace=True)
             cos = torch.tensor(cos_los_submit).clone().detach()
             user_cs[i] = m(cos)
-        logger.info(user_cs)
-        logger.info("相似度计算完毕，并relu")
+       
+      
         serverl2 = 0
         for name in server_update:
             serverl2 += torch.sum(torch.pow(server_update[name].data, 2))
@@ -628,12 +612,11 @@ class Helper:
                 # user_nor[i] += torch.sum(torch.pow(update[agent_name_keys[i]][name].data, 2))
             squared_sum = math.sqrt(squared_sum)
             user_nor[i] = serverl2 / squared_sum
-            print('用户l2:', squared_sum)
-            print('用户系数:', user_nor[i])
+           
             for name in update[agent_name_keys[i]]:
                 update[agent_name_keys[i]][name] = update[agent_name_keys[i]][name] * user_nor[i]
 
-        logger.info("标准化结束")
+     
         sum_cs = 0
         for i in user_cs:
             sum_cs += user_cs[i]
@@ -644,7 +627,7 @@ class Helper:
                 namelayer += user_cs[i] * update[agent_name_keys[i]][name]
             newvalue = data + namelayer / sum_cs
             target_model.state_dict()[name].copy_(newvalue)
-        logger.info('聚合完毕')
+       
 
         return True
 
@@ -662,18 +645,13 @@ class Helper:
 
     def flame(self, target_model, updates, agent_name_keys):
         update = dict()
-        # 加载用户模型参数
+     
         for idx, data in updates.items():
-            update[idx] = data[1]  # 各个用户的本地模型参数
+            update[idx] = data[1] 
 
-        # 保存所有client 参数到np里
-        # current_weights = np.concatenate([i.data.cpu().numpy().flatten() for i in target_model.parameters()])
-        # users_params = np.empty((len(agent_name_keys), len(current_weights)), dtype=current_weights.dtype)
-        # users_params = Helper.collect_weights(updates, users_params)
-        # print(users_params.shape)
+      
 
-        # 计算模型之间的余弦相似度
-        logger.info('计算余弦相似度')
+   
         cos_bb = defaultdict(dict)
         for i in range(0, len(agent_name_keys)):
             for j in range(i + 1):
@@ -695,47 +673,26 @@ class Helper:
             cos_distance.append(aa)
         logger.info(cos_distance)
 
-        # cos_aa = defaultdict(dict)
-        # for i in range(0, len(users_params)):
-        #     for j in range(i + 1):
-        #         t1 = np.array(users_params[i])
-        #         t2 = np.array(users_params[j])
-        #         t1_norm = np.linalg.norm(t1)
-        #         t2_norm = np.linalg.norm(t2)
-        #         cos = np.dot(t1, t2) / (t1_norm * t2_norm)
-        #         print(f"({i},{j}):{cos}")
-        #         cos_aa[i][j] = cos_aa[j][i] = 1 - min(1, cos)
-        # cos_distance = []
-        # for i in range(0, len(agent_name_keys)):
-        #     aa = []
-        #     for j in range(0, len(agent_name_keys)):
-        #         aa.append(cos_aa[i][j])
-        #     cos_distance.append(aa)
-        # print(cos_distance)
-
-        # 聚类
-        logger.info('余弦相似度计算完毕，开始聚类！')
         clusterer = hdbscan.HDBSCAN(min_samples=1, min_cluster_size=6, allow_single_cluster=True)
         clusterer.fit(cos_distance)
         logger.info(clusterer.labels_)
-        max_index = clusterer.labels_.max()  # 样本最多的类的标签
-        logger.info(f'样本最多的类别id：{max_index}')
+        max_index = clusterer.labels_.max() 
+      
 
-        if max_index==-1:  #全部是离群点，跳过本轮聚合
+        if max_index==-1: 
             return True   #skip
 
-        # 保存聚出的正常用户
+      
         benign_id = []
         for i in range(len(clusterer.labels_)):
             if clusterer.labels_[i] == max_index:
                 benign_id.append(i)
         logger.info(benign_id)
 
-        logger.info('聚类结束，计算欧式距离！')
-        # 计算所有用户的 S_t
+      
         last_global_model = dict()
         for name, data in target_model.state_dict().items():
-            last_global_model[name] = target_model.state_dict()[name].clone()  # 获取上一轮全局模型参数
+            last_global_model[name] = target_model.state_dict()[name].clone() 
 
         distance_list = []
         for i in range(0, len(agent_name_keys)):
@@ -749,29 +706,28 @@ class Helper:
         S_t = self.mediumnum(distance_list)
         logger.info(S_t)
 
-        logger.info('裁剪本地模型')
-        for i in benign_id:  # 聚出的正常用户
+       
+        for i in benign_id:
             for name in update[agent_name_keys[i]]:
                 update[agent_name_keys[i]][name] = min(1, S_t / distance_list[i]) * (
                         update[agent_name_keys[i]][name].data - last_global_model[name].data) + last_global_model[
                                                        name].data
-
-        logger.info('聚合模型')
+ 
         for name, param in target_model.state_dict().items():
             newvalue = torch.zeros_like(param)
             for i in benign_id:
                 newvalue = newvalue + update[agent_name_keys[i]][name].data
-            newvalue = newvalue / len(benign_id)  # 取平均
+            newvalue = newvalue / len(benign_id) 
             target_model.state_dict()[name].copy_(newvalue)
 
-        logger.info('加噪声')
+       
         sigma_a = S_t * (1 / self.params['flame_eps']) * math.sqrt(2 * math.log(1.25 / self.params['flame_dalta']))
         logger.info(sigma_a)
         for name, param in target_model.state_dict().items():
             newvalue = param + Helper.dp_noise(param, sigma_a).to(config.device)
             target_model.state_dict()[name].copy_(newvalue)
 
-        logger.info('聚合完毕')
+       
 
         return True
 
@@ -864,7 +820,7 @@ class Helper:
         #
         q_s = nummodel / numuser
         delta_s = clipthr / num_items_train
-        noise_scale = delta_s * np.sqrt(2 * q_s * threshold_epochs * np.log(1 / sigma)) / privacys  # 修改
+        noise_scale = delta_s * np.sqrt(2 * q_s * threshold_epochs * np.log(1 / sigma)) / privacys 
         return noise_scale
 
     @staticmethod
@@ -909,29 +865,24 @@ class Helper:
 
     def fedLDP(self, target_model, updates, agent_name_keys):
         update = dict()
-        # 加载用户模型参数
+       
         for name, data in updates.items():
             update[name] = data[1]
 
-        # if self.params['type'] == config.TYPE_CIFAR:
-        #     epocha = self.params['epochs'] / 100
-        # if self.params['type'] == config.TYPE_CIFAR100:
-        #     epocha = self.params['epochs'] / 10
-        # else:
-        #     epocha = self.params['epochs']
+       
 
         noise_scale = copy.deepcopy(
             Helper.Privacy_account(self.params['num_items_train'], self.params['epochs'], self.params['no_models'],
                                    self.params['number_of_total_participants'], self.params['sigma'],
                                    self.params['privacy_budget']))
-        print('噪声方差计算完毕', noise_scale)
+      
 
         for idx in range(len(agent_name_keys)):
             update[agent_name_keys[idx]] = copy.deepcopy(Helper.clipping(update[agent_name_keys[idx]]))
-        print('clip用户参数完毕')
+    
 
         update = Helper.noise_add(agent_name_keys=agent_name_keys, noise_scale=noise_scale, w=update)
-        print('用户参数加噪完毕')
+    
 
         for name, data in target_model.state_dict().items():
             w_avg = copy.deepcopy(update[agent_name_keys[0]][name])
@@ -949,7 +900,7 @@ class Helper:
 
     def fedCDP(self, target_model, epoch, agent_name_keys, updates):
         update = dict()
-        # 加载用户模型参数
+  
         for name, data in updates.items():
             update[name] = data[1]
 
@@ -964,31 +915,29 @@ class Helper:
             updateweight = [
                 np.concatenate((updateweight[idx], np.expand_dims(update[agent_name_keys[i]][name].cpu(), -1)), -1)
                 for idx, name in enumerate(update[agent_name_keys[i]])]
-        # 求norm，
+      
         Norm = [np.sqrt(np.sum(
             np.square(updateweight[name]), axis=tuple(range(updateweight[name].ndim)[:-1]), keepdims=True)) for name
             in range(num_weights)]
-        print('求norm完毕')
-
-        # 求median
+      
+ 
         median = [np.median(Norm[name], axis=-1, keepdims=True) for name
                   in range(num_weights)]
-        print('求median完毕')
-        print(median)
+      
         # clip update
         factor = [Norm[i] / median[i] for i in range(num_weights)]
         for i in range(num_weights):
             factor[i][factor[i] > 1.0] = 1.0
 
         ClippedUpdates = [updateweight[i] / factor[i] for i in range(num_weights)]
-        print('clip模型完毕')
+       
         mm = float(ClippedUpdates[0].shape[-1])
-        # 求均值，在参数均值上加上noise作为新的global model
+       
         MeanClippedUpdates = [np.mean(ClippedUpdates[i], -1) for i in range(num_weights)]
         GaussianNoise = [(1.0 / mm * np.random.normal(loc=0.0, scale=float(self.params['sigmas'] * median[i]),
                                                       size=MeanClippedUpdates[i].shape)) for i in range(num_weights)]
         Sanitized_Updates = [MeanClippedUpdates[i] + GaussianNoise[i] for i in range(num_weights)]
-        print('模型梯度计算完毕')
+       
         logger.info(f" epoch: {epoch} add noise on the global model!")
         for idx, name in enumerate(target_model.state_dict()):
             newvalue = target_model.state_dict()[name].cpu() + Sanitized_Updates[idx]
@@ -996,73 +945,58 @@ class Helper:
         return True
 
     def DnC(self, target_model, updates, users_count, m):
-        # print(updates)
-        # 确定形状
+       
         current_weights = np.concatenate([i.data.cpu().numpy().flatten() for i in target_model.parameters()])
         users_grads = np.empty((users_count, len(current_weights)), dtype=current_weights.dtype)
-        # 获取 user_grads 梯度
+      
         users_grads = Helper.collect_gradients(updates, users_grads)
-        # 单个梯度/参数的形状
+       
         velocity = np.zeros(current_weights.shape, users_grads.dtype)
-        # ddos:(10,28580)
-        print("grad收集完毕")
+       
         every_user_grads_list = []
 
         for i, param_across_users in enumerate(users_grads):
-            # ddos (28580,)
-            # print("聚合时，单个用户梯度的形状：", param_across_users.shape)
+          
             every_user_grads_list.append(param_across_users)
 
         delta = np.array(every_user_grads_list)
-        # c: 过滤分数
+     
         c = self.params['filter_parameters']
-        # m: 恶意客户端数量
-        # m = len(self.params['adversary_list'])
-        # b: 计算均值的人数
+      
+       
         b = self.params['compute_average_person_number']
-        # d: 参与梯度聚合的人数 （for ddos 10人）
+      
         d = len(delta)
-        # 循环次数
+     
         niter = self.params['niter']
-        # 计算出来的梯度
+       
         current_grads, _ = self.computeDnC(delta, c, m, b, d, niter)
 
-        print("current_grad计算完毕")
-        # velocity = self.params['momentum'] * velocity - self.params['lr'] * current_grads
-        # current_weights += velocity
+       
+       
         current_weights = current_weights - self.params['lr'] * current_grads
-        print("current_weight计算完毕")
+      
         Helper.row_into_parameters(current_weights, target_model)
-        print("转化成model")
+      
         return True
 
     def computeDnC(self, delta, c, m, b, d, niter):
-        """
-            :param delta: 需要进行DeC的矩阵，梯度矩阵  type → ndarray
-            :param c: (超参)过滤分数
-            :param m: (超参)恶意客户端数
-            :param b: (超参)子样本的维度，计算均值的人数
-            :param d: 输入梯度集合的维度，即梯度的个数,即参与聚合的人数，总人数
-            :param niter: (超参)循环次数
-            :return:监测过后的梯度矩阵（聚合后的矩阵集合） type → ndarray
-        """
-
+       
         def get_index_of_min(nums, n):
-            # 获取最小的前n个的index
+           
             index = []
             for i in range(n):
                 min_value = np.min(nums)
                 index_tmp = nums.index(min_value)
                 nums[index_tmp] = 9
                 index.append(index_tmp)
-            print("差异score:", nums)
-            print("选出前 ", n, " 小的序号:", index)
+           
             return index
 
-        def autoNorm(data):  # 传入一个列表
-            mins = np.min(np.array(data))  # 返回data矩阵中每一列中最小的元素，返回一个列表
-            maxs = np.max(np.array(data))  # 返回data矩阵中每一列中最大的元素，返回一个列表
-            ranges = maxs - mins  # 差值区间
+        def autoNorm(data): 
+            mins = np.min(np.array(data))  
+            maxs = np.max(np.array(data)) 
+            ranges = maxs - mins 
             normData = (np.array(data) - mins) / ranges
             normData = list(normData)
             return normData
@@ -1072,36 +1006,35 @@ class Helper:
         L_good = []
         while i < niter:
             i += 1
-            # 随机 r
+           
             r = random.sample(range(0, d), b)
             r.sort()
             for j in range(len(r)):
                 delta_i.append(delta[r[j]])
-            # 对 delta_i 中的 b个n维向量求平均
+           
             mu = np.average(delta_i, axis=0)
             delta_c = delta_i - mu
-            # 运行 cifar\mnist 数据集的时候，内存溢出 报错
-            # mnist: (5, 431080)
-            print(delta_c.shape)
+           
+          
             _, _, vt = np.linalg.svd(delta_c, full_matrices=False)
-            # v 为 vt（右奇异矩阵） 的 top
+          
             v = vt[0]
-            # s 为 outlier score
+         
             s = []
             delta_tmp = delta - mu
             for k in range(d):
-                # 每个选出的梯度与奇异矩阵的top特征向量进行计算向量积，获得 outlier score
+               
                 s.append(np.dot(delta_tmp[k], v))
-            # 归一化
+        
             s = autoNorm(s)
             L = get_index_of_min(s, d - c * m)
             L_good.append(L)
-        # L_final的类型是set
+    
         L_final = set(L_good[0]).intersection(*L_good[1:])
         final_list = []
         for l in range(len(L_final)):
             final_list.append(delta[list(L_final)[l]])
-        print("进行平均的梯度列表：", final_list)
+      
         delta_a = np.average(final_list, axis=0)
         return delta_a, L_final
 
@@ -1138,7 +1071,7 @@ class Helper:
 
         for name, data in points[0].items():
             weighted_updates[name] = torch.zeros_like(data)
-        for w, p in zip(weights, points):  # 对每一个agent
+        for w, p in zip(weights, points): 
             for name, data in weighted_updates.items():
                 temp = (w / tot_weights).float().to(config.device)
                 temp = temp * (p[name].float())
