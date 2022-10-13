@@ -93,7 +93,7 @@ def cifar100_trigger(helper, local_model, target_model, noise_trigger, intinal_t
 
               
                 delta_noise = noise - aa
-                noise = aa + proj_lp(delta_noise, int(helper.params['phi']), 2)  #  其余为 5  bulyan 为10
+                noise = aa + proj_lp(delta_noise, int(helper.params['phi']), 2)  
                
                
 
