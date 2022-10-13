@@ -14,13 +14,13 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
     epochs_change_update_dict = dict()
     num_samples_dict = dict()
     current_number_of_adversaries = len(helper.params['adversary_list'])
-    poisonupdate_dict = dict()  # 被控制用户的模型
-    poisonloss_dict = dict()  # 被控住用户的loss
+    poisonupdate_dict = dict() 
+    poisonloss_dict = dict() 
     user_grads = []
     server_update = dict()
     models = copy.deepcopy(local_model)
     models.copy_params(target_model.state_dict())
-    IsTrigger = False  # 是否进行过trigger调整
+    IsTrigger = False 
     tuned_trigger = noise_trigger
 
     for model_id in range(helper.params['no_models']):
@@ -36,7 +36,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
         model = local_model
         normalmodel = copy.deepcopy(local_model)
         model.copy_params(target_model.state_dict())
-        normalmodel.copy_params(target_model.state_dict())  # 未受到攻击时的模型
+        normalmodel.copy_params(target_model.state_dict()) 
         optimizer = torch.optim.SGD(model.parameters(), lr=helper.params['lr'],
                                     momentum=helper.params['momentum'],
                                     weight_decay=helper.params['decay'])
@@ -72,7 +72,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                 internal_epoch_num = helper.params['internal_poison_epochs']
                 step_lr = helper.params['poison_step_lr']
 
-                # 正常训练
+               
                 main.logger.info('normally training')
 
                 nortrain_data = helper.statehelper_dic[state_key].get_trainloader()
@@ -91,7 +91,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                 for name, param in normalmodel.named_parameters():
                     normal_params_variables[name] = normalmodel.state_dict()[name].clone().detach().requires_grad_(
                         False)
-                # 如果投毒保存正常模型更新，以防止不发起攻击
+               
                 normalmodel_updates_dict = dict()
                 for name, data in normalmodel.state_dict().items():
                     normalmodel_updates_dict[name] = torch.zeros_like(data)
@@ -141,7 +141,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                         if helper.params['attack_methods'] == 'SCBA':
                             malDistance_Loss = helper.model_dist_norm_var(model, normal_params_variables)
                             distance_loss = helper.model_dist_norm_var(model, target_params_variables)
-                            ###与其他被控制用户模型更新的相似度
+                           
                             sum_cs = 0
                             otheradnum = 0
                             # main.logger.info('compute similarity')
@@ -161,7 +161,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                             loss = class_loss + helper.params['alpha_loss'] * distance_loss + helper.params[
                                 'beta_loss'] * malDistance_Loss + \
                                    helper.params['gamma_loss'] * sum_cs
-                            poisonloss_dict[state_key] = loss  # 保存损失
+                            poisonloss_dict[state_key] = loss  
                             loss.backward()
                         elif helper.params['attack_methods'] == 'a little':
                             distance_loss = helper.model_dist_norm_var(model, target_params_variables)
