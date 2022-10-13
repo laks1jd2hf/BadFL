@@ -35,7 +35,7 @@ def proj_lp(v, xi, p):
 
 
 def fmnist_trigger(helper, local_model, target_model, noise_trigger, intinal_trigger):
-    # 加载参数
+   
     logger.info("start trigger fine-tuning")
     init = False
     # load model
@@ -82,11 +82,10 @@ def fmnist_trigger(helper, local_model, target_model, noise_trigger, intinal_tri
                         else:
                             noise[0][i][j] = 0
 
-                #print(f'pgd前噪声：{torch.norm(noise - aa)}')
+               
                 delta_noise = noise - aa
                 noise = aa + proj_lp(delta_noise,10, 2)
-                # noise = pre_trigger + proj_lp(delta_noise, 1, 2)  #其余
-                #print(f'pgd后噪声：{torch.norm(noise - aa)}')
+               
 
                 noise = Variable(cuda(noise.data, True), requires_grad=True)
                 pred = output.data.max(1)[1]
