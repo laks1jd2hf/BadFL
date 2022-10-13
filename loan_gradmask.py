@@ -39,7 +39,7 @@ def grad_mask_loan(helper, local_model, target_model, ratio=0.5):
             grad_abs_sum_list.append(parms.grad.abs().view(-1).sum().item())
             k_layer += 1
     grad_list = torch.cat(grad_list).cuda()
-    _, indices = torch.topk(-1 * grad_list, int(len(grad_list) * ratio))  # 保留
+    _, indices = torch.topk(-1 * grad_list, int(len(grad_list) * ratio))  
     mask_flat_all_layer = torch.zeros(len(grad_list)).cuda()
     mask_flat_all_layer[indices] = 1.0
     count = 0
@@ -78,17 +78,17 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
     epochs_submit_update_dict = dict()
     epochs_change_update_dict = dict()
     num_samples_dict = dict()
-    current_number_of_adversaries = 0  # 攻击者数量
-    for temp_name in state_keys:  # agent是包含正常用户、攻击者的列表
+    current_number_of_adversaries = 0 
+    for temp_name in state_keys: 
         if temp_name in helper.params['adversary_list']:
             current_number_of_adversaries += 1
-    poisonupdate_dict = dict()  # 被控制用户的模型
-    # poisonloss_dict = dict()  # 被控住用户的loss
+    poisonupdate_dict = dict() 
+  
     user_grads = []
     server_update = dict()
     models = copy.deepcopy(local_model)
     models.copy_params(target_model.state_dict())
-    IsTrigger = False  # 是否进行过trigger调整
+    IsTrigger = False 
     IsGrad_mask = False
     tuned_trigger = noise_trigger
     mask_grad_list = []
@@ -107,7 +107,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
         model = local_model
         normalmodel = copy.deepcopy(local_model)
         model.copy_params(target_model.state_dict())
-        normalmodel.copy_params(target_model.state_dict())  # 未受到攻击时的模型
+        normalmodel.copy_params(target_model.state_dict())  
         optimizer = torch.optim.SGD(model.parameters(), lr=helper.params['lr'],
                                     momentum=helper.params['momentum'],
                                     weight_decay=helper.params['decay'])
@@ -129,7 +129,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
             for name, param in target_model.named_parameters():
                 target_params_variables[name] = last_params_variables[name].clone().detach().requires_grad_(False)
 
-            #保证当前的攻击者数量满足假设
+          
             if helper.params['aggregation_methods'] == config.AGGR_KRUM or helper.params[
                 'aggregation_methods'] == config.AGGR_MKRUM or helper.params[
                 'aggregation_methods'] == config.AGGR_TRIMMED_MEAN:
@@ -152,7 +152,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                     tuned_trigger = loan_trigger(helper, local_model, target_model, noise_trigger, intinal_trigger)
                     IsTrigger = True
 
-                # 生成梯度掩码，限制参数更新范围，每个epoch只生成一次mask
+             
                 if helper.params['gradmask_ratio'] != 1:
                     main.logger.info('make grad_mask start !!!')
                     if not IsGrad_mask:
@@ -165,7 +165,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                 internal_epoch_num = helper.params['internal_poison_epochs']
                 step_lr = helper.params['poison_step_lr']
 
-                # 正常训练
+              
                 main.logger.info('normally training')
 
                 nortrain_data = helper.statehelper_dic[state_key].get_trainloader()
@@ -184,12 +184,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                 for name, param in normalmodel.named_parameters():
                     normal_params_variables[name] = normalmodel.state_dict()[name].clone().detach().requires_grad_(
                         False)
-                # 如果投毒保存正常模型更新，以防止不发起攻击
-                # normalmodel_updates_dict = dict()
-                # for name, data in normalmodel.state_dict().items():
-                #     normalmodel_updates_dict[name] = torch.zeros_like(data)
-                #     normalmodel_updates_dict[name] = (data - last_params_variables[name])
-
+              
                 main.logger.info('save normal model, normally training ending')
 
                 poison_optimizer = torch.optim.SGD(model.parameters(), lr=poison_lr,
@@ -235,7 +230,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                         if helper.params['attack_methods'] == 'SCBA':
                             malDistance_Loss = helper.model_dist_norm_var(model, normal_params_variables)
                             distance_loss = helper.model_dist_norm_var(model, target_params_variables)
-                            ###与其他被控制用户模型更新的相似度
+                         
                             sum_cs = 0
                             otheradnum = 0
                             # main.logger.info('compute similarity')
@@ -255,7 +250,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                             loss = class_loss + helper.params['alpha_loss'] * distance_loss + helper.params[
                                 'beta_loss'] * malDistance_Loss + \
                                    helper.params['gamma_loss'] * sum_cs
-                            # poisonloss_dict[state_key] = loss  # 保存损失
+                            # poisonloss_dict[state_key] = loss 
                             loss.backward()
                         elif helper.params['attack_methods'] == 'a little':
                             distance_loss = helper.model_dist_norm_var(model, target_params_variables)
@@ -268,7 +263,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                             loss = class_loss
                             loss.backward()
 
-                        # 在梯度上施加 mask，限制更新
+                       
                         if helper.params['gradmask_ratio'] != 1:
                             apply_grad_mask(model, mask_grad_list)
 
@@ -446,7 +441,7 @@ def LoanTrain(helper, start_epoch, local_model, target_model, is_poison, state_k
                     helper.params['aggregation_methods'] == config.AGGR_MKRUM:
                 epochs_local_update_list.append(client_grad)
 
-            elif helper.params['aggregation_methods'] == config.AGGR_FLAME:  # 传的是参数
+            elif helper.params['aggregation_methods'] == config.AGGR_FLAME:  
                 epochs_local_update_list.append(local_model_weightss_dict)
             else:
                 epochs_local_update_list.append(local_model_update_dict)
